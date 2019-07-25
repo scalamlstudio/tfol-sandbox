@@ -1,6 +1,6 @@
-local Player = {}
+local Character = {}
 
-function Player:new(asset, width, height, duration)
+function Character:newPlayer(asset, width, height, duration)
     local player = {}
 
     local image = love.graphics.newImage(asset)
@@ -25,7 +25,7 @@ function Player:new(asset, width, height, duration)
             table.insert(player.quads, love.graphics.newQuad(x, y, width, height, image:getDimensions()))
         end
     end
-
+    player.quadNow = player.quads[1]
     player.quadSize = #player.quads
 
     player.duration = duration or 1
@@ -67,15 +67,15 @@ function Player:new(asset, width, height, duration)
         if player.currentTime >= player.duration then
             player.currentTime = player.currentTime - player.duration
         end
+        player.quadNow = player.quads[math.floor(player.currentTime / player.duration * player.quadSize) + 1]
     end
 
     function player:draw()
-        local spriteNum = math.floor(player.currentTime / player.duration * player.quadSize) + 1
         love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(player.spriteSheet, player.quads[spriteNum], player.x, player.y, 0, player.face, 1, player.width / 2, player.height)
+        love.graphics.draw(player.spriteSheet, player.quadNow, player.x, player.y, 0, player.face, 1, player.width / 2, player.height)
     end
 
     return player
 end
 
-return Player
+return Character

@@ -13,50 +13,61 @@ function World:new()
     world.mt = {}          -- create the matrix
     world.mth = math.floor(world.height / world.bs)
     world.mtw = math.floor(world.width / world.bs)
-    for i = 0, world.mth do
+
+    for i = 1, world.mth do
       world.mt[i] = {}     -- create a new row
-      for j = 0, world.mtw do
+      for j = 1, world.mtw do
         world.mt[i][j] = 0
       end
     end
 
-    for i = 0, math.floor(world.height / world.bs) do
-        world.mt[i][i] = 1
-        world.mt[i][world.mtw - i] = 1
+    local rockid = 1
+    local dirtid = 2
+    local tiles = {rockid, dirtid}
+
+    for i = 1, world.mth do
+        world.mt[i][i] = rockid
+        world.mt[i][world.mtw - i + 1] = rockid
+        world.mt[i][1] = dirtid
+        world.mt[i][world.mtw] = dirtid
+    end
+    for i = 1, world.mtw do
+        world.mt[1][i] = dirtid
+        world.mt[world.mth][i] = dirtid
     end
 
     local function mttype(mtt)
-        for i = 0, world.mth do
-            for j = 0, world.mtw do
+        for i = 1, world.mth do
+            for j = 1, world.mtw do
                 local t = world.mt[i][j]
                 if t == mtt then
-                    love.graphics.rectangle('fill', j * world.bs, i * world.bs, world.bs, world.bs)
+                    love.graphics.rectangle('fill', (j - 1) * world.bs, (i - 1) * world.bs, world.bs, world.bs)
                 end
             end
         end
     end
 
-    local tbg01 = love.graphics.newImage("asset/tbg01.png")
-    local function rocks()
-        mttype(1)
-    end
-
-    local tbg02 = love.graphics.newImage("asset/tbg02.jpg")
-    local function woods()
-        mttype(0)
+    local tbg = {}
+    local tbgf = {}
+    for i = 1, #tiles do
+        local tileid = tiles[i]
+        tbg[tileid] = love.graphics.newImage("asset/image/background/" .. tostring(tileid) .. ".png")
+        local function tilefunc()
+            mttype(tileid)
+        end
+        tbgf[tileid] = tilefunc
     end
 
     function world:draw()
-        -- draw a rectangle as a stencil. Each pixel touched by the rectangle will have its stencil value set to 1. The rest will be 0.
-        love.graphics.stencil(rocks, "replace", 1)
-        -- love.graphics.stencil(woods, "replace", 0)
-        -- Only allow rendering on pixels which have a stencil value greater than 0.
-        love.graphics.setStencilTest("equal", 1)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(tbg01, 0, 0, 0, 1, 1)
-        love.graphics.setStencilTest("equal", 0)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.draw(tbg02, 0, 0, 0, 1, 1)
+        -- draw a rectangle as a stencil. Each pixel touched by the rectangle will have its stencil value set to 1.
+        for i = 1, #tiles do
+            local tileid = tiles[i]
+            love.graphics.stencil(tbgf[tileid], "replace", tileid, true) -- false: the rest be 0, true: keep origin
+            love.graphics.setStencilTest("equal", tileid)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.draw(tbg[tileid], 0, 0, 0, 4, 3)
+        end
+        -- close stencil
         love.graphics.setStencilTest()
     end
 
