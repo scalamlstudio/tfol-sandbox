@@ -1,23 +1,32 @@
+local Asset = require("general/asset")
+local Control = require("general/control")
+local Animation = require("general/animation")
+
 local World = require("class/world")
-local Platform = require("class/platform")
-local Character = require("class/character")
+local Panel = require("class/panel")
+local Object = require("class/object")
+
+local Characters = require("content/characters")
+
+local StartTime = love.timer.getTime()
 
 function love.load()
     love.window.setTitle("TEST")
-    -- love.graphics.setBackgroundColor(0.4, 0.6, 0.9) -- Sky Blue
-    love.graphics.setBackgroundColor(0, 0, 0) -- Black
-
-    world = World:new()
-    platform = Platform:new()
-    player = Character:newPlayer("asset/image/character/oldHero.png", 16, 18, 1)
+    love.graphics.setBackgroundColor(0, 0, 0)
+    characters = {}
+    objects = {}
+    characters[1] = Characters:OldHero(Asset)
+    world = World:new(Asset, characters, objects)
+    panel = Panel:new("Time: 0", 10, 10)
 end
 
 function love.update(dt)
-    player:update(love.keyboard.isDown('d'), love.keyboard.isDown('a'), love.keyboard.isDown('space'), dt)
+    panel:update("Time: " .. tostring(math.floor(love.timer.getTime() - StartTime)))
+    world:update(panel, dt)
+    Asset:update(panel)
 end
 
 function love.draw()
-    world:draw()
-    platform:draw()
-    player:draw()
+    world:draw(panel)
+    panel:draw()
 end

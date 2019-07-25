@@ -2,7 +2,7 @@
 
 local Object = {}
 
-function Object:new(oType)
+function Object:new(config)
     object = {}
     return object
 end

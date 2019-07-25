@@ -1,6 +1,6 @@
 local World = {}
 
-function World:new()
+function World:new(asset, players, objects)
     world = {}
 
     world.width = love.graphics.getWidth()
@@ -47,28 +47,36 @@ function World:new()
         end
     end
 
-    local tbg = {}
     local tbgf = {}
     for i = 1, #tiles do
         local tileid = tiles[i]
-        tbg[tileid] = love.graphics.newImage("asset/image/background/" .. tostring(tileid) .. ".png")
         local function tilefunc()
             mttype(tileid)
         end
         tbgf[tileid] = tilefunc
     end
 
-    function world:draw()
+    function world:update(panel, dt)
+        for i = 1, #players do
+            players[i]:update(panel, dt)
+        end
+    end
+
+    function world:draw(panel)
         -- draw a rectangle as a stencil. Each pixel touched by the rectangle will have its stencil value set to 1.
         for i = 1, #tiles do
             local tileid = tiles[i]
             love.graphics.stencil(tbgf[tileid], "replace", tileid, true) -- false: the rest be 0, true: keep origin
             love.graphics.setStencilTest("equal", tileid)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.draw(tbg[tileid], 0, 0, 0, 4, 3)
+            local bg = asset:getImage("asset/image/background/" .. tostring(tileid) .. ".png")
+            love.graphics.draw(bg, 0, 0, 0, 4, 3)
         end
         -- close stencil
         love.graphics.setStencilTest()
+        for i = 1, #players do
+            players[i]:draw(panel)
+        end
     end
 
     return world
