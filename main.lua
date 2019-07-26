@@ -6,17 +6,27 @@ local World = require("class/world")
 local Panel = require("class/panel")
 local Object = require("class/object")
 
-local Characters = require("content/characters")
+local Character = require("class/character")
 
 local StartTime = love.timer.getTime()
 
 function love.load()
     love.window.setTitle("TEST")
     love.graphics.setBackgroundColor(0, 0, 0)
-    characters = {}
     objects = {}
-    characters[1] = Characters:OldHero(Asset)
-    world = World:new(Asset, characters, objects)
+    objects[1] = Character:OldHero(Asset)
+    objects[2] = Object:new({
+    	name = "TestBlock",
+    	shape = 1,
+    	gf = 0,
+    	m = 100,
+    	h = 100,
+    	w = 100,
+    	x = 500,
+    	y = 500,
+    	image = Asset:getImage("asset/image/background/1.png")
+    })
+    world = World:new(Asset, objects, config)
     panel = Panel:new("Time: 0", 10, 10)
 end
 

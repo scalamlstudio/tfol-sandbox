@@ -1,18 +1,22 @@
+local Physics = require("general/physics")
+
 local World = {}
 
-function World:new(asset, players, objects)
-    world = {}
+function World:new(asset, objects, config)
+    world = config or {}
+    world.w = world.w or love.graphics.getWidth()
+    world.h = world.h or love.graphics.getHeight()
 
-    world.width = love.graphics.getWidth()
-    world.height = love.graphics.getHeight()
+    world.physics = world.physics or Physics:new({
+        gravity = {x = 0, y = 100},
+        w = world.w,
+        h = world.h
+    })
 
-    world.x = 0
-    world.y = 0
-
-    world.bs = 10          -- block size
+    world.ts = 10          -- tile size
     world.mt = {}          -- create the matrix
-    world.mth = math.floor(world.height / world.bs)
-    world.mtw = math.floor(world.width / world.bs)
+    world.mth = math.floor(world.h / world.ts)
+    world.mtw = math.floor(world.w / world.ts)
 
     for i = 1, world.mth do
       world.mt[i] = {}     -- create a new row
@@ -41,7 +45,7 @@ function World:new(asset, players, objects)
             for j = 1, world.mtw do
                 local t = world.mt[i][j]
                 if t == mtt then
-                    love.graphics.rectangle('fill', (j - 1) * world.bs, (i - 1) * world.bs, world.bs, world.bs)
+                    love.graphics.rectangle('fill', (j - 1) * world.ts, (i - 1) * world.ts, world.ts, world.ts)
                 end
             end
         end
@@ -57,8 +61,9 @@ function World:new(asset, players, objects)
     end
 
     function world:update(panel, dt)
-        for i = 1, #players do
-            players[i]:update(panel, dt)
+        world.physics:update(panel, objects, dt)
+        for i = 1, #objects do
+            objects[i]:control(panel, dt) -- Sync Objects Positions if needed
         end
     end
 
@@ -74,8 +79,8 @@ function World:new(asset, players, objects)
         end
         -- close stencil
         love.graphics.setStencilTest()
-        for i = 1, #players do
-            players[i]:draw(panel)
+        for i = 1, #objects do
+            objects[i]:draw(panel)
         end
     end
 
