@@ -5,35 +5,64 @@ local Object = require("class/object")
 
 local Character = {}
 
-function Character:OldHero(asset)
-    local control = Control:new({type = 1})
+function Character:OldHero(asset, panel, space, control)
     local anim = Animation:new(asset,
         {file = "asset/image/character/oldHero.png", w = 16, h = 18})
-    local player = Object:new({
+    local player = Object:new(panel, space, {
         name = "oldHero",
-        type = "player",
-        shape = 1,
+        bodyType = "dynamic",
+        shapeType = 1,
         anim = anim,
         w = 16,
         h = 18,
-        x = love.graphics.getWidth() / 2,
-        y = love.graphics.getHeight() / 2
+        x = 300,
+        y = 100,
+        mass = 10
     })
     player.speed = 800
-    player.jumpForce = 1000
+    player.jumpForce = 5000
+    control = control or Control:new({type = "keyboard"})
+    
+    function player:groundSpeed()
+        return player.speed * player.mass / 2
+    end
+    function player:airSpeed()
+        return player.speed * player.mass / 10
+    end
 
-    function player:control(panel, dt)
-        player.vx = 0
+    function player:control(dt)
+        local tx, ty = player.body:getLinearVelocity()
+        local v = math.sqrt(tx * tx + ty * ty)
+        -- panel:add("tmp: " .. tostring(tx) .. " " .. tostring(ty))
+        if v > player.speed then -- speed cap
+            player.body:setLinearVelocity(tx * player.speed / v, ty * player.speed / v)
+        end
+        if player:grounded() then -- friction
+            player.body:setLinearVelocity(tx * 0.6, ty)
+        end
         if control:right() then
-            player.sx = 1
-            player.vx = player.vx + player.speed
+            if not control:left() then
+                player.sx = 1
+            end
+            if player:grounded() then
+                player.body:applyForce(player:groundSpeed(), 0)
+            else
+                player.body:applyForce(player:airSpeed(), 0)
+            end
         end
         if control:left() then
-            player.sx = -1
-            player.vx = player.vx - player.speed
+            if not control:right() then
+                player.sx = -1
+            end
+            if player:grounded() then
+                player.body:applyForce(-player:groundSpeed(), 0)
+            else
+                player.body:applyForce(-player:airSpeed(), 0)
+            end
         end
-        if control:jump() and player.vy == 0 then
-            player:force({x = 0, y = -player.jumpForce})
+        if control:jump() and player:grounded() then
+            panel:add("jump")
+            player.body:applyForce(0, -player.jumpForce)
         end
     end
 

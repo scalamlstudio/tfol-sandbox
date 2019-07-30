@@ -1,4 +1,4 @@
-local Asset = {}
+local asset = {}
 
 local assetImageQueue = {} -- load image when used
 local assetImageTime = {} -- drop image when expired
@@ -7,7 +7,7 @@ local assetAudioTime = {} -- drop audio when expired
 local defaultImage = love.graphics.newImage("asset/image/background/0.png")
 local defaultAudio = nil -- love.audio.newSource("asset/audio/bgm/0.mp3")
 
-function Asset:getImage(file)
+function asset:getImage(file)
     if file ~= nil then
         if assetImageQueue[file] ~= nil then
         else
@@ -20,7 +20,7 @@ function Asset:getImage(file)
     end
 end
 
-function Asset:getAudio(file)
+function asset:getAudio(file)
     if file ~= nil then
         if assetAudioQueue[file] ~= nil then
         else
@@ -33,7 +33,7 @@ function Asset:getAudio(file)
     end
 end
 
-function Asset:update(panel)
+function asset:update(panel)
     for file, time in pairs(assetImageTime) do
         if love.timer.getTime() - time > 60 then
             panel:add("expire image: " .. file)
@@ -50,4 +50,4 @@ function Asset:update(panel)
     end
 end
 
-return Asset
+return asset

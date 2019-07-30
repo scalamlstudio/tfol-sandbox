@@ -19,6 +19,7 @@ function Panel:new(text, x, y)
     end
 
     function panel:draw()
+        love.graphics.setColor(0, 1, 0)
         love.graphics.print(panel.text, panel.x, panel.y)
     end
 
