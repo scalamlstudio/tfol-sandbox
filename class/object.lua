@@ -6,48 +6,82 @@ function Object:new(panel, space, config)
     local obj = config or {}
 
     obj.time = obj.time or love.timer.getTime()
-    obj.name = obj.name or love.math.random(100000000, 199999999)
+    obj.name = obj.name or "no-" .. love.math.random(100000000, 199999999)
 
-    obj.x = obj.x or 0
-    obj.y = obj.y or 0
-    obj.mass = obj.mass or 1
-    obj.bodyType = obj.bodyType or "static"
-    obj.body = love.physics.newBody(space, obj.x, obj.y, obj.bodyType)
-    obj.body:setMass(obj.mass)
-    obj.body:setFixedRotation(obj.fixRotate or true)
+    obj.parts = obj.parts or {}
+    panel:add(tostring(obj.parts[1]))
+    for i = 1, #obj.parts do
+        local part = obj.parts[i] -- object body
+        part.x = part.x or 0
+        part.y = part.y or 0
+        part.mass = part.mass or 1
+        part.ground = part.ground or true
+        part.bodyType = part.bodyType or "static"
+        part.body = love.physics.newBody(space, part.x, part.y, part.bodyType)
+        part.body:setMass(part.mass)
+        part.body:setFixedRotation(part.fixRotate or true)
 
-    obj.shapes = obj.shapes or {}
-    
-
-    obj.shapeType = obj.shapeType or 1 -- 0 circle, 1 square
-    obj.w = obj.w or 2
-    obj.h = obj.h or 2
-    if obj.shapeType == 0 then
-        obj.shape = love.physics.newCircleShape(obj.h / 2)
-    elseif obj.shapeType == 1 then
-        obj.shape = love.physics.newRectangleShape(0, 0, obj.h, obj.w)
+        part.shapeType = part.shapeType or 1
+        part.w = part.w or 2
+        part.h = part.h or 2
+        if part.shapeType == 0 then
+            part.shape = love.physics.newCircleShape(part.h / 2)
+        elseif part.shapeType == 1 then
+            part.shape = love.physics.newRectangleShape(0, 0, part.h, part.w)
+        end
+        part.density = part.density or 1
+        part.fixture = love.physics.newFixture(part.body, part.shape, part.density)
+        if part.effect then
+            part.fixture:setSensor(true)
+        end
+        part.sx = part.sx or 1
+        part.sy = part.sy or 1
+        part.r = part.r or 1
+        part.g = part.g or 1
+        part.b = part.b or 1
+        part.a = part.a or 1
     end
-    obj.density = obj.density or 1
-    obj.fixture = love.physics.newFixture(obj.body, obj.shape, obj.density)
-    if obj.effect then
-        obj.fixture:setSensor(true)
-    end
 
-    obj.sx = obj.sx or 1
-    obj.sy = obj.sy or 1
-    obj.r = obj.r or 1
-    obj.g = obj.g or 1
-    obj.b = obj.b or 1
-    obj.a = obj.a or 1
+    obj.joints = obj.joints or {}
+    for i = 1, #obj.joints do
+        local joint = obj.joints[i] -- object joint
+        if joint.id1 and obj.parts[joint.id1] and joint.id2 and obj.parts[joint.id2] then
+            local jointType = joint.type or "weld"
+            if jointType == "weld" then
+                joint.x = joint.x or obj.parts[joint.id1].body:getX()
+                joint.y = joint.y or obj.parts[joint.id1].body:getY()
+                joint.collideConnected = joint.collideConnected or false
+                love.physics.newWeldJoint(obj.parts[joint.id1].body, obj.parts[joint.id2].body,
+                    joint.x, joint.y, joint.collideConnected)
+            elseif jointType == "rope" then
+                joint.x1 = joint.x1 or obj.parts[joint.id1].body:getX()
+                joint.y1 = joint.y1 or obj.parts[joint.id1].body:getY()
+                joint.x2 = joint.x2 or obj.parts[joint.id2].body:getX()
+                joint.y2 = joint.y2 or obj.parts[joint.id2].body:getY()
+                joint.maxLength = joint.maxLength or 10
+                joint.collideConnected = joint.collideConnected or false
+                love.physics.newRopeJoint(obj.parts[joint.id1].body, obj.parts[joint.id2].body,
+                    joint.x1, joint.y1, joint.x2, joint.y2, joint.maxLength, joint.collideConnected)
+            else
+            end
+        end
+    end
 
     function obj:grounded()
-        local contacts = obj.body:getContacts()
-        if #contacts > 0 then
-            for i = 1, #contacts do
-                local x1, y1, x2, y2 = contacts[i]:getPositions()
-                -- panel:add(tostring(x1) .. tostring(y1) .. tostring(x2) .. tostring(y2))
-                if y1 and y2 and y1 > obj.body:getY() and y2 > obj.body:getY() then
-                    return true
+        for i = 1, #obj.parts do
+            local part = obj.parts[i] -- object body
+            if part.ground then
+                local contacts = part.body:getContacts()
+                if #contacts > 0 then
+                    for i = 1, #contacts do
+                        local x1, y1, x2, y2 = contacts[i]:getPositions()
+                        -- panel:add(tostring(x1) .. " " .. tostring(y1) .. " " .. tostring(x2) .. " " .. tostring(y2))
+                        if part.shapeType == 1 and y1 and y2 and y1 > part.body:getY() and y2 > part.body:getY() + part.h / 4 then
+                            return true
+                        elseif part.shapeType == 0 and y1 and y1 > part.body:getY() + part.h / 4 then
+                            return true
+                        end
+                    end
                 end
             end
         end
@@ -58,31 +92,39 @@ function Object:new(panel, space, config)
     end
 
     function obj:update(dt)
-        if obj.anim then
-            obj.anim:update(dt)
+        for i = 1, #obj.parts do
+            local part = obj.parts[i] -- object body
+            if part.anim then
+                part.anim:update(dt)
+            end
         end
     end
 
     function obj:draw()
-        -- if panel and obj.body then
-        --     panel:add("obj:" .. obj.name ..
-        --         "  x: " .. tostring(obj.body:getX()) .. "  y: " .. tostring(obj.body:getY()))
-        -- end
-        if obj.anim then
-            obj.anim:draw(obj.body:getX(), obj.body:getY(), obj.body:getAngle(),
-                obj.sx, obj.sy, obj.w / 2, obj.h / 2, obj.r, obj.g, obj.b, obj.a)
+        if panel and string.sub(obj.name, 1, 3) ~= "no-" then
+            panel:add("obj:" .. obj.name)
         end
-        if obj.image then
-            love.graphics.setColor(obj.r, obj.g, obj.b, obj.a)
-            love.graphics.draw(obj.image, obj.body:getX(), obj.body:getY(),
-                obj.body:getAngle(), obj.sx, obj.sy, obj.w / 2, obj.h / 2)
-        end
-        love.graphics.setColor(1, 0, 0) -- set the drawing color to green for the ground
-        if obj.shapeType == 1 then
-            love.graphics.polygon("line", obj.body:getWorldPoints(obj.shape:getPoints()))
-        elseif obj.shapeType == 0 then
-            love.graphics.circle("line", obj.body:getX(), obj.body:getY(),
-                obj.shape:getRadius(), 20)
+        for i = 1, #obj.parts do
+            local part = obj.parts[i] -- object body
+            if panel and part.body and string.sub(obj.name, 1, 3) ~= "no-" then
+                panel:add("  x: " .. tostring(part.body:getX()) .. "  y: " .. tostring(part.body:getY()))
+            end
+            if part.anim then
+                part.anim:draw(part.body:getX(), part.body:getY(), part.body:getAngle(),
+                    part.sx, part.sy, part.w / 2, part.h / 2, part.r, part.g, part.b, part.a)
+            end
+            if part.image then
+                love.graphics.setColor(part.r, part.g, part.b, part.a)
+                love.graphics.draw(part.image, part.body:getX(), part.body:getY(),
+                    part.body:getAngle(), part.sx, part.sy, part.w / 2, part.h / 2)
+            end
+            love.graphics.setColor(1, 0, 0) -- set the drawing color to green for the ground
+            if part.shapeType == 1 then
+                love.graphics.polygon("line", part.body:getWorldPoints(part.shape:getPoints()))
+            elseif part.shapeType == 0 then
+                love.graphics.circle("line", part.body:getX(), part.body:getY(),
+                    part.shape:getRadius(), 20)
+            end
         end
     end
 

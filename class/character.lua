@@ -10,17 +10,34 @@ function Character:OldHero(asset, panel, space, control)
         {file = "asset/image/character/oldHero.png", w = 16, h = 18})
     local player = Object:new(panel, space, {
         name = "oldHero",
-        bodyType = "dynamic",
-        shapeType = 1,
-        anim = anim,
-        w = 16,
-        h = 18,
-        x = 300,
-        y = 100,
-        mass = 10
+        parts = {{
+            bodyType = "dynamic",
+            ground = true,
+            x = 300,
+            y = 100,
+            mass = 10,
+            shapeType = 0,
+            anim = anim,
+            w = 16,
+            h = 18
+        }, {
+            bodyType = "dynamic",
+            x = 300,
+            y = 90,
+            shapeType = 1,
+            h = 5,
+            w = 5,
+            -- effect = {},
+            a = 0.1
+        }},
+        joints = {{
+            id1 = 1,
+            id2 = 2
+        }}
     })
+    player.mass = 10
     player.speed = 800
-    player.jumpForce = 5000
+    player.jumpForce = 10000
     control = control or Control:new({type = "keyboard"})
     
     function player:groundSpeed()
@@ -30,39 +47,44 @@ function Character:OldHero(asset, panel, space, control)
         return player.speed * player.mass / 10
     end
 
+    local lastJump = 0
     function player:control(dt)
-        local tx, ty = player.body:getLinearVelocity()
+        local tx, ty = player.parts[1].body:getLinearVelocity()
         local v = math.sqrt(tx * tx + ty * ty)
         -- panel:add("tmp: " .. tostring(tx) .. " " .. tostring(ty))
         if v > player.speed then -- speed cap
-            player.body:setLinearVelocity(tx * player.speed / v, ty * player.speed / v)
+            player.parts[1].body:setLinearVelocity(tx * player.speed / v, ty * player.speed / v)
         end
         if player:grounded() then -- friction
-            player.body:setLinearVelocity(tx * 0.6, ty)
+            player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
         end
         if control:right() then
             if not control:left() then
-                player.sx = 1
+                player.parts[1].sx = 1
             end
             if player:grounded() then
-                player.body:applyForce(player:groundSpeed(), 0)
+                player.parts[1].body:applyForce(player:groundSpeed(), -200)
             else
-                player.body:applyForce(player:airSpeed(), 0)
+                player.parts[1].body:applyForce(player:airSpeed(), 0)
             end
         end
         if control:left() then
             if not control:right() then
-                player.sx = -1
+                player.parts[1].sx = -1
             end
             if player:grounded() then
-                player.body:applyForce(-player:groundSpeed(), 0)
+                player.parts[1].body:applyForce(-player:groundSpeed(), -200)
             else
-                player.body:applyForce(-player:airSpeed(), 0)
+                player.parts[1].body:applyForce(-player:airSpeed(), 0)
             end
         end
-        if control:jump() and player:grounded() then
+        if lastJump > 0 then
+            lastJump = lastJump - 1
+        end
+        if control:jump() and player:grounded() and lastJump == 0 then
             panel:add("jump")
-            player.body:applyForce(0, -player.jumpForce)
+            lastJump = 10
+            player.parts[1].body:applyForce(0, -player.jumpForce)
         end
     end
 

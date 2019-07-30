@@ -26,14 +26,16 @@ function love.load()
     table.insert(world.objects, player)
     table.insert(world.objects, Object:new(panel, space, {
         name = "TestBlock",
-        shapeType = 1,
-        h = 256,
-        w = 256,
-        x = 300,
-        y = 400,
-        effect = {},
-        a = 0.1,
-        image = Asset:getImage("asset/image/background/1.png")
+        parts = {{
+            x = 300,
+            y = 400,
+            shapeType = 1,
+            h = 256,
+            w = 256,
+            effect = {},
+            a = 0.1,
+            image = Asset:getImage("asset/image/background/1.png")
+        }}
     }))
 end
 
@@ -41,11 +43,10 @@ function love.update(dt)
     local width, height = love.window.getDesktopDimensions()
     panel:update("Time:" .. tostring(math.floor(love.timer.getTime() - StartTime)))
     panel:add("Window - W:" .. width .. "  H:" .. height)
-    panel:add("Player - X:" .. tostring(player.body:getX()) ..
-        "  Y:" .. tostring(player.body:getY()))
+    panel:add("Player - X:" .. tostring(player.parts[1].body:getX()) ..
+        "  Y:" .. tostring(player.parts[1].body:getY()))
     Camera:follow(world, player) -- before others
     world:update(dt)
-    love.graphics.translate(-player.body:getX(), -player.body:getY())
     Asset:update(panel)
 end
 
