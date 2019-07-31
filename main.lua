@@ -22,8 +22,10 @@ function love.load()
 
     world = World:new(Asset, panel, space)
     control = Control:new({type = "keyboard"})
-    player = Character:OldHero(Asset, panel, space, control)
+    player = Character:Rvros(Asset, panel, space, control)
+    npc = Character:OldHero(Asset, panel, space)
     table.insert(world.objects, player)
+    table.insert(world.objects, npc)
     table.insert(world.objects, Object:new(panel, space, {
         name = "TestBlock",
         parts = {{
@@ -45,6 +47,7 @@ function love.update(dt)
     panel:add("Window - W:" .. width .. "  H:" .. height)
     panel:add("Player - X:" .. tostring(player.parts[1].body:getX()) ..
         "  Y:" .. tostring(player.parts[1].body:getY()))
+    -- panel:add("Main Control: " .. control.type)
     Camera:follow(world, player) -- before others
     world:update(dt)
     Asset:update(panel)

@@ -21,6 +21,7 @@ function World:new(asset, panel, space, config)
 
     function world:update(dt)
         space:update(dt)
+        panel:add("World Objects Number: " .. tostring(#world.objects))
         for i = 1, #world.objects do
             world.objects[i]:control(dt) -- Sync Objects Positions if needed
             world.objects[i]:update(dt)

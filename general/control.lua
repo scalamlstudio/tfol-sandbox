@@ -3,12 +3,12 @@
 local Control = {}
 
 function Control:new(config)
-    control = config or {}
+    local control = config or {}
     control.type = control.type or "ai"
     control.rightKey = control.rightKey or 'd'
     control.leftKey = control.leftKey or 'a'
     control.jumpKey = control.jumpKey or 'w'
-    if config.type == "keyboard" then
+    if control.type == "keyboard" then
         function control:right()
             return love.keyboard.isDown(control.rightKey)
         end
@@ -17,6 +17,16 @@ function Control:new(config)
         end
         function control:jump()
             return love.keyboard.isDown(control.jumpKey)
+        end
+    else
+        function control:right()
+            return false
+        end
+        function control:left()
+            return false
+        end
+        function control:jump()
+            return false
         end
     end
     return control

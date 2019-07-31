@@ -5,6 +5,8 @@ local Animation = {}
 function Animation:new(asset, config)
     local anim = config
     local image = asset:getImage(config.file)
+    anim.name = anim.name or config.file
+    anim.type = anim.type or "loop"
     anim.quads = {}
     anim.i = 1
     anim.duration = anim.duration or 1
@@ -19,10 +21,14 @@ function Animation:new(asset, config)
 
     function anim:update(dt)
         anim.currentTime = anim.currentTime + dt
-        if anim.currentTime >= anim.duration then
-            anim.currentTime = anim.currentTime - anim.duration
+        if anim.type == "loop" then
+            if anim.currentTime >= anim.duration then
+                anim.currentTime = anim.currentTime - anim.duration
+            end
+            anim.i = math.floor(anim.currentTime / anim.duration * #anim.quads) + 1
+        elseif anim.type == "once" then
+            anim.i = math.min(#anim.quads, math.floor(anim.currentTime / anim.duration * #anim.quads) + 1)
         end
-        anim.i = math.floor(anim.currentTime / anim.duration * #anim.quads) + 1
     end
 
     function anim:draw(x, y, d, sx, sy, ox, oy, r, g, b, a)

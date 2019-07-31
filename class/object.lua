@@ -9,12 +9,12 @@ function Object:new(panel, space, config)
     obj.name = obj.name or "no-" .. love.math.random(100000000, 199999999)
 
     obj.parts = obj.parts or {}
-    panel:add(tostring(obj.parts[1]))
+    -- panel:add(tostring(obj.parts[1]))
     for i = 1, #obj.parts do
         local part = obj.parts[i] -- object body
         part.x = part.x or 0
         part.y = part.y or 0
-        part.mass = part.mass or 1
+        part.mass = part.mass or 0
         part.ground = part.ground or true
         part.bodyType = part.bodyType or "static"
         part.body = love.physics.newBody(space, part.x, part.y, part.bodyType)
@@ -89,6 +89,9 @@ function Object:new(panel, space, config)
     end
 
     function obj:control(dt)
+        -- if panel and string.sub(obj.name, 1, 3) ~= "no-" then
+        --     panel:add("control obj:" .. obj.name)
+        -- end
     end
 
     function obj:update(dt)
