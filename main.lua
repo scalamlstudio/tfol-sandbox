@@ -45,8 +45,8 @@ function love.update(dt)
     local width, height = love.window.getDesktopDimensions()
     panel:update("Time:" .. tostring(math.floor(love.timer.getTime() - StartTime)))
     panel:add("Window - W:" .. width .. "  H:" .. height)
-    panel:add("Player - X:" .. tostring(player.parts[1].body:getX()) ..
-        "  Y:" .. tostring(player.parts[1].body:getY()))
+    panel:add("Player - X:" .. tostring(player:getX()) ..
+        "  Y:" .. tostring(player:getY()))
     -- panel:add("Main Control: " .. control.type)
     Camera:follow(world, player) -- before others
     world:update(dt)

@@ -42,9 +42,9 @@ function Camera:setScale(sx, sy)
     self.scaleY = sy or self.scaleY
 end
 
-function Camera:follow(world, obj)
-    Camera.x = obj.parts[1].body:getX() - world.w / 2
-    Camera.y = obj.parts[1].body:getY() - world.h / 2
+function Camera:follow(world, player)
+    Camera.x = player:getX() - world.w / 2
+    Camera.y = player:getY() - world.h / 2
 end
 
 return Camera
