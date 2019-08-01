@@ -174,12 +174,14 @@ function Character:Rvros(asset, panel, space, control)
             end
         end
         if lastJump > 0 then
-            lastJump = lastJump - 1
+            lastJump = lastJump - dt
+        elseif lastJump < 0 then
+            lastJump = 0
         end
         if control:jump() and player:grounded() and lastJump == 0 then
             -- panel:add("jump")
             player.parts[1].anim = jumpAnim
-            lastJump = 10
+            lastJump = 0.1
             player.parts[1].body:applyForce(0, -player.jumpForce)
         end
     end
