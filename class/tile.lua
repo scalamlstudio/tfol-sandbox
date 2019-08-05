@@ -4,7 +4,7 @@ local Object = require("class/object")
 
 local Tile = {}
 
-function Tile:new(panel, space, config)
+function Tile:new(env, config)
     local tile = config or {}
     tile.ts = tile.ts or 10
     tile.w = tile.w or love.graphics.getWidth()
@@ -26,16 +26,20 @@ function Tile:new(panel, space, config)
     end
 
     -- generation function - START
-    for i = 1, tile.mth do
-        -- tile.mt[i][i] = rockid
-        tile.mt[i][tile.mtw - i + 1] = rockid
-        tile.mt[i][1] = dirtid
-        tile.mt[i][tile.mtw] = dirtid
-    end
     for i = 1, tile.mtw do
         tile.mt[1][i] = dirtid
         tile.mt[tile.mth][i] = dirtid
-        tile.mt[tile.mth / 2][i] = dirtid
+    end
+    for i = tile.mth / 2, tile.mth do
+        for j = 1, tile.mtw do
+            tile.mt[i][j] = dirtid
+        end
+    end
+    for i = 1, tile.mth do
+        -- tile.mt[i][i] = rockid
+        tile.mt[i][tile.mtw - i + 1] = rockid
+        tile.mt[i][1] = rockid
+        tile.mt[i][tile.mtw] = rockid
     end
     -- generation function - END
 
@@ -43,7 +47,7 @@ function Tile:new(panel, space, config)
     for i = 1, tile.mth do
         for j = 1, tile.mtw do
             if tile.mt[i][j] ~= 0 then
-                table.insert(objects, Object:new(panel, space, {
+                table.insert(objects, Object:new(env, {
                     parts = {{
                         x = (j - 1) * tile.ts + tile.ts / 2,
                         y = (i - 1) * tile.ts + tile.ts / 2,
@@ -54,6 +58,36 @@ function Tile:new(panel, space, config)
             end
         end
     end
+    -- for i = 1, tile.mth do
+    --     local tmpj = 1
+    --     local tmpt = tile.mt[i][1]
+    --     for j = 1, tile.mtw do
+    --         if tile.mt[i][j] ~= tmpt then
+    --             if tmpt ~= 0 then
+    --                 table.insert(objects, Object:new(env, {
+    --                     parts = {{
+    --                         y = (i - 1) * tile.ts + tile.ts / 2,
+    --                         x = (tmpj - 1) * tile.ts + tile.ts * (j - tmpj) / 2,
+    --                         h = tile.ts,
+    --                         w = tile.ts * (j - tmpj)
+    --                     }}
+    --                 }))
+    --             end
+    --             tmpj = j
+    --             tmpt = tile.mt[i][j]
+    --         end
+    --     end
+    --     if tmpt ~= 0 then
+    --         table.insert(objects, Object:new(env, {
+    --             parts = {{
+    --                 y = (i - 1) * tile.ts + tile.ts / 2,
+    --                 x = (tmpj - 1) * tile.ts + tile.ts * (tile.mtw - tmpj + 1) / 2,
+    --                 h = tile.ts,
+    --                 w = tile.ts * (tile.mtw - tmpj + 1)
+    --             }}
+    --         }))
+    --     end
+    -- end
 
     function tile:draw(tileid)
         for i = 1, tile.mth do

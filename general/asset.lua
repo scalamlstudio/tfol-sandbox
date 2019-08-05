@@ -33,17 +33,15 @@ function asset:getAudio(file)
     end
 end
 
-function asset:update(panel)
+function asset:update(dt)
     for file, time in pairs(assetImageTime) do
         if love.timer.getTime() - time > 60 then
-            panel:add("expire image: " .. file)
             assetImageQueue[file] = nil
             assetImageTime[file] = nil
         end
     end
     for file, time in pairs(assetAudioTime) do
         if love.timer.getTime() - time > 60 then
-            panel:add("expire audio: " .. file)
             assetAudioQueue[file] = nil
             assetAudioTime[file] = nil
         end

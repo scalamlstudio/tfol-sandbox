@@ -31,6 +31,13 @@ function Animation:new(asset, config)
         end
     end
 
+    function anim:ended()
+        return anim.type == "once" and math.floor(anim.currentTime / anim.duration * #anim.quads) > #anim.quads
+    end
+    function anim:refresh()
+        anim.currentTime = 0
+    end
+
     function anim:draw(x, y, d, sx, sy, ox, oy, r, g, b, a)
         love.graphics.setColor(r or 1, g or 1, b or 1, a or 1)
         love.graphics.draw(asset:getImage(config.file), anim.quads[anim.i], x, y, d, sx, sy, ox, oy)

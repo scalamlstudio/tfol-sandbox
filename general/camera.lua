@@ -2,9 +2,13 @@ local Camera = {}
 
 Camera.x = 0
 Camera.y = 0
+Camera.vx = 0
+Camera.vy = 0
+Camera.sticky = 0.3
 Camera.scaleX = 1
 Camera.scaleY = 1
 Camera.rotation = 0
+Camera.vibration = 0
 
 function Camera:set()
     love.graphics.push()
@@ -43,8 +47,21 @@ function Camera:setScale(sx, sy)
 end
 
 function Camera:follow(world, player)
-    Camera.x = player:getX() - world.w / 2
-    Camera.y = player:getY() - world.h / 2
+    Camera.x = Camera.x + Camera.vx + Camera.vibration * math.random(-5, 5)
+    Camera.y = Camera.y + Camera.vy + Camera.vibration * math.random(-5, 5)
+    Camera.vx = Camera.vx * Camera.sticky + (player:getX() - world.w / 2 - Camera.x) * (1 - Camera.sticky)
+    Camera.vy = Camera.vy * Camera.sticky + (player:getY() - world.h / 2 - Camera.y) * (1 - Camera.sticky)
+end
+
+function Camera:vibrate(vibration)
+    Camera.vibration = vibration
+end
+
+function Camera:update(dt)
+    Camera.vibration = Camera.vibration - dt
+    if Camera.vibration < 0 then
+        Camera.vibration = 0
+    end
 end
 
 return Camera

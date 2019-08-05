@@ -5,10 +5,225 @@ local Object = require("class/object")
 
 local Character = {}
 
-function Character:OldHero(asset, panel, space, control)
-    local anim = Animation:new(asset,
+function Character:Rvros(env)
+    local anims = {{
+        idle = Animation:new(env.asset,
+            {name = "idle", file = "asset/image/character/rvros-idle-001.png",
+            w = 50, h = 37, duration = 1}),
+        run_left = Animation:new(env.asset,
+            {name = "run", file = "asset/image/character/rvros-run-001.png",
+            w = 50, h = 37, duration = 0.5}),
+        run_right = Animation:new(env.asset,
+            {name = "run", file = "asset/image/character/rvros-run-001.png",
+            w = 50, h = 37, duration = 0.5}),
+        fall = Animation:new(env.asset,
+            {name = "fall", file = "asset/image/character/rvros-fall-001.png",
+            w = 50, h = 37, duration = 0.2}),
+        jump = Animation:new(env.asset,
+            {name = "jump", type = "once", file = "asset/image/character/rvros-jump-001.png",
+            w = 50, h = 37, duration = 0.4}),
+        attack_1 = Animation:new(env.asset,
+            {name = "attack", type = "once", file = "asset/image/character/rvros-attack-001.png",
+            w = 50, h = 37, duration = 0.4}),
+        cast_spell = Animation:new(env.asset,
+            {name = "cast", type = "once", file = "asset/image/character/rvros-cast-001.png",
+            w = 50, h = 37, duration = 0.2}),
+        hurt = Animation:new(env.asset, 
+            {name = "hurt", type = "once", file = "asset/image/character/rvros-hurt-001.png",
+            w = 50, h = 37, duration = 0.2}),
+        die = Animation:new(env.asset,
+            {name = "die", type = "once", file = "asset/image/character/rvros-die-001.png",
+            w = 50, h = 37, duration = 0.2}),
+        wall_slide = Animation:new(env.asset,
+            {name = "wall_slide", file = "asset/image/character/rvros-wall_slide-001.png",
+            w = 50, h = 37, duration = 0.5})
+    }}
+    local player = Object:new(env, {
+        name = "Rvros",
+        hp = 10,
+        parts = {{
+            bodyType = "dynamic",
+            ground = true,
+            x = 300,
+            y = 50,
+            mass = 10,
+            shapeType = 0,
+            anim = anims[1]["idle"],
+            w = 30,
+            h = 30
+        }, {
+            bodyType = "static",
+            x = 300,
+            y = 200,
+            shapeType = 1,
+            w = 100,
+            h = 12
+        }}
+    })
+    player.mass = 10
+    player.speed = 500
+    player.jumpForce = 30000
+    player.jumpCD = 0.1
+    player.state = "idle"
+    local control = env.control or Control:new({type = "keyboard"})
+    
+    local function groundForce()
+        return player.speed * player.mass
+    end
+    local function airForce()
+        return player.speed * player.mass / 10
+    end
+    local jumpCD = 0
+    local groundCD = 0
+    local airCD = 0
+    local function canJump()
+        return groundCD > 0 and jumpCD == 0
+    end
+    local function letsJump()
+        jumpCD = player.jumpCD
+        local tx, ty = player.parts[1].body:getLinearVelocity()
+        player.parts[1].body:setPosition(
+            player.parts[1].body:getX(),
+            player.parts[1].body:getY() - 10)
+        player.parts[1].body:setLinearVelocity(tx, 0)
+        player.parts[1].body:applyForce(0, -player.jumpForce)
+    end
+    local function forceRun(force)
+        player.parts[1].body:applyForce(force, 0)
+        if force > 0 then
+            player.parts[1].sx = 1
+        elseif force < 0 then
+            player.parts[1].sx = -1
+        end
+    end
+    function player:control(dt)
+        -- env.panel:add(player.name .. " control type " .. control.type)
+        local tx, ty = player.parts[1].body:getLinearVelocity()
+        local v = math.sqrt(tx * tx + ty * ty)
+        -- env.panel:add("tmp: " .. tostring(tx) .. " " .. tostring(ty))
+        if v > player.speed then -- speed cap
+            player.parts[1].body:setLinearVelocity(tx * player.speed / v, ty * player.speed / v)
+        end
+        if jumpCD > 0 then
+            jumpCD = jumpCD - dt
+        elseif jumpCD < 0 then
+            jumpCD = 0
+        end
+        if player:grounded() then
+            groundCD = groundCD + dt
+            airCD = 0
+        else
+            groundCD = 0
+            airCD = airCD + dt
+        end
+        env.panel:add("jumpCD:" .. jumpCD .. "  groundCD:" .. groundCD .. "  airCD:" .. airCD)
+        -- FINITE STATE MACHINE --
+        if player.state == "idle" then
+            if control:jump() and canJump() then
+                player.state = "jump"
+                letsJump()
+            elseif control:attack() then
+                player.state = "attack_1"
+            elseif control:cast() then
+                player.state = "cast_spell"
+            elseif control:left() then
+                player.state = "run_left"
+            elseif control:right() then
+                player.state = "run_right"
+            else
+                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+            end
+        elseif player.state == "run_left" then
+            if control:jump() and canJump() then
+                player.state = "jump"
+                letsJump()
+            elseif not control:left() then
+                player.state = "idle"
+            elseif not canJump() and airCD > 0.1 then
+                player.state = "fall"
+            else
+                forceRun(-groundForce())
+            end
+        elseif player.state == "run_right" then
+            if control:jump() and canJump() then
+                player.state = "jump"
+                letsJump()
+            elseif not control:right() then
+                player.state = "idle"
+            elseif not canJump() and airCD > 0.1 then
+                player.state = "fall"
+            else
+                forceRun(groundForce())
+            end
+        elseif player.state == "jump" then
+            if ty > 0 then
+                player.state = "fall"
+            elseif control:left() then
+                forceRun(-airForce())
+            elseif control:right() then
+                forceRun(airForce())
+            end
+        elseif player.state == "fall" then
+            if groundCD > 0 then
+                player.state = "idle"
+            elseif control:left() then
+                forceRun(-airForce())
+            elseif control:right() then
+                forceRun(airForce())
+            end
+        elseif player.state == "attack_1" then
+            if player.parts[1].anim:ended() then
+                player.parts[1].anim:refresh()
+                player.state = "idle"
+            else
+                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+            end
+        elseif player.state == "cast_spell" then
+            if player.parts[1].anim:ended() then
+                player.parts[1].anim:refresh()
+                player.state = "idle"
+            else
+                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+            end
+        elseif player.state == "hurt" then
+            if player.parts[1].anim:ended() then
+                player.parts[1].anim:refresh()
+                player.state = "idle"
+            else
+                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+            end
+        elseif player.state == "die" then
+            if player.parts[1].anim:ended() then
+                player.parts[1].anim:refresh()
+                player.state = "idle"
+            else
+                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+            end
+        -- elseif player.state == "wall_slide" then
+        --     if groundCD > 0 then
+        --         player.state = "idle"
+        --     end
+        end
+
+        if anims[1][player.state] then
+            player.parts[1].anim = anims[1][player.state]
+        end
+    end
+
+    function player:getX()
+        return player.parts[1].body:getX()
+    end
+    function player:getY()
+        return player.parts[1].body:getY()
+    end
+
+    return player
+end
+
+function Character:OldHero(env)
+    local anim = Animation:new(env.asset,
         {file = "asset/image/character/oldHero.png", w = 16, h = 18})
-    local player = Object:new(panel, space, {
+    local player = Object:new(env, {
         name = "oldHero",
         parts = {{
             bodyType = "dynamic",
@@ -36,115 +251,6 @@ function Character:OldHero(asset, panel, space, control)
             id2 = 2
         }}
     })
-
-    return player
-end
-
-function Character:Rvros(asset, panel, space, control)
-    local anims = {
-        idle = Animation:new(asset,
-            {name = "idle", file = "asset/image/character/rvros-idle-001.png", w = 50, h = 37}),
-        run = Animation:new(asset,
-            {name = "run", file = "asset/image/character/rvros-run-001.png", w = 50, h = 37}),
-        jump = Animation:new(asset, {
-            name = "jump",
-            type = "once",
-            file = "asset/image/character/rvros-jump-001.png", w = 50, h = 37,
-            duration = 0.4
-        })
-    }
-    local player = Object:new(panel, space, {
-        name = "Rvros",
-        parts = {{
-            bodyType = "dynamic",
-            ground = true,
-            x = 300,
-            y = 50,
-            mass = 10,
-            shapeType = 0,
-            anim = anims["idle"],
-            w = 50,
-            h = 37
-        }}
-    })
-    player.mass = 10
-    player.speed = 1000
-    player.jumpForce = 40000
-    player.state = "idle"
-    control = control or Control:new({type = "keyboard"})
-    
-    function player:groundSpeed()
-        return player.speed * player.mass
-    end
-    function player:airSpeed()
-        return player.speed * player.mass / 10
-    end
-
-    local lastJump = 0
-    function player:control(dt)
-        -- panel:add(player.name .. " control type " .. control.type)
-        local tx, ty = player.parts[1].body:getLinearVelocity()
-        local v = math.sqrt(tx * tx + ty * ty)
-        -- panel:add("tmp: " .. tostring(tx) .. " " .. tostring(ty))
-        if v > player.speed then -- speed cap
-            player.parts[1].body:setLinearVelocity(tx * player.speed / v, ty * player.speed / v)
-        end
-        if player:grounded() and lastJump == 0 then -- friction
-            player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
-        end
-        if control:right() and not control:left() then
-            player.parts[1].sx = 1
-            if player:grounded() and lastJump == 0 then
-                if player.state ~= "run" then
-                    player.state = "run"
-                end
-                player.parts[1].body:applyForce(player:groundSpeed(), -10)
-            else
-                player.parts[1].body:applyForce(player:airSpeed(), 0)
-            end
-        end
-        if control:left() and not control:right() then
-            player.parts[1].sx = -1
-            if player:grounded() and lastJump == 0 then
-                if player.state ~= "run" then
-                    player.state = "run"
-                end
-                player.parts[1].body:applyForce(-player:groundSpeed(), -10)
-            else
-                player.parts[1].body:applyForce(-player:airSpeed(), 0)
-            end
-        end
-        if not control:right() and not control:left() and player.state ~= "idle" then
-            if player:grounded() and lastJump == 0 then
-                player.state = "idle"
-            end
-        end
-        if lastJump > 0 then
-            lastJump = lastJump - dt
-        elseif lastJump < 0 then
-            lastJump = 0
-        end
-        if control:jump() and player:grounded() and lastJump == 0 then
-            -- panel:add("jump")
-            player.state = "jump"
-            lastJump = 0.1
-            player.parts[1].body:setPosition(
-                player.parts[1].body:getX(),
-                player.parts[1].body:getY() - 10)
-            player.parts[1].body:setLinearVelocity(tx, 0)
-            player.parts[1].body:applyForce(0, -player.jumpForce)
-        end
-        for i = 1, #player.parts do
-            player.parts[i].anim = anims[player.state]
-        end
-    end
-
-    function player:getX()
-        return player.parts[1].body:getX()
-    end
-    function player:getY()
-        return player.parts[1].body:getY()
-    end
 
     return player
 end
