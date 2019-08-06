@@ -48,6 +48,7 @@ function Tile:new(env, config)
         for j = 1, tile.mtw do
             if tile.mt[i][j] ~= 0 then
                 table.insert(objects, Object:new(env, {
+                    type = "tile",
                     parts = {{
                         x = (j - 1) * tile.ts + tile.ts / 2,
                         y = (i - 1) * tile.ts + tile.ts / 2,
@@ -88,6 +89,16 @@ function Tile:new(env, config)
     --         }))
     --     end
     -- end
+
+    function tile:findLand(x, y)
+        local ti = math.floor(y / tile.ts) + 1
+        local tj = math.floor(x / tile.ts) + 1
+        while ti > 0 and tj > 0 and
+            ti <= tile.mth and tj <= tile.mtw and tile.mt[ti][tj] == 0 do
+            ti = ti + 1
+        end
+        return (ti - 1) * tile.ts
+    end
 
     function tile:draw(tileid)
         for i = 1, tile.mth do

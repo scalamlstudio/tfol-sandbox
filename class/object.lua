@@ -6,6 +6,7 @@ function Object:new(env, config)
     local obj = config or {}
 
     obj.time = obj.time or love.timer.getTime()
+    obj.type = obj.type or "default"
     obj.name = obj.name or "no-" .. love.math.random(100000000, 199999999)
     obj.hp = obj.hp or 1
 
@@ -109,12 +110,12 @@ function Object:new(env, config)
     end
 
     function obj:draw()
-        if env.panel and string.sub(obj.name, 1, 3) ~= "no-" then
+        if env.panel and obj.type ~= "tile" then
             env.panel:add("obj:" .. obj.name)
         end
         for i = 1, #obj.parts do
             local part = obj.parts[i] -- object body
-            if env.panel and part.body and string.sub(obj.name, 1, 3) ~= "no-" then
+            if env.panel and part.body and obj.type ~= "tile" then
                 env.panel:add("  x: " .. tostring(part.body:getX()) .. "  y: " .. tostring(part.body:getY()))
             end
             if part.anim then

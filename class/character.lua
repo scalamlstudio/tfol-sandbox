@@ -56,8 +56,8 @@ function Character:Rvros(env)
             x = 300,
             y = 200,
             shapeType = 1,
-            w = 100,
-            h = 12
+            w = 10,
+            h = 2
         }}
     })
     player.mass = 10
@@ -97,6 +97,9 @@ function Character:Rvros(env)
         end
     end
     function player:control(dt)
+        player.parts[2].body:setPosition(
+            player.parts[1].body:getX(),
+            env.world.tile:findLand(player.parts[1].body:getX(), player.parts[1].body:getY()) - 1)
         -- env.panel:add(player.name .. " control type " .. control.type)
         local tx, ty = player.parts[1].body:getLinearVelocity()
         local v = math.sqrt(tx * tx + ty * ty)
@@ -139,7 +142,7 @@ function Character:Rvros(env)
                 letsJump()
             elseif not control:left() then
                 player.state = "idle"
-            elseif not canJump() and airCD > 0.1 then
+            elseif not canJump() and airCD > 0.2 then
                 player.state = "fall"
             else
                 forceRun(-groundForce())
@@ -150,7 +153,7 @@ function Character:Rvros(env)
                 letsJump()
             elseif not control:right() then
                 player.state = "idle"
-            elseif not canJump() and airCD > 0.1 then
+            elseif not canJump() and airCD > 0.2 then
                 player.state = "fall"
             else
                 forceRun(groundForce())

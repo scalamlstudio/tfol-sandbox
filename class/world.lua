@@ -24,9 +24,11 @@ function World:new(env, config)
 
     function world:update(dt)
         for i = 1, #world.objects do
-            for j = 1, #world.objects[i].parts do
-                if world.objects[i].parts[j].bodyType == "static" then
-                    world.objects[i].parts[j].active = false
+            if world.objects[i].type == "tile" then
+                for j = 1, #world.objects[i].parts do
+                    if world.objects[i].parts[j].bodyType == "static" then
+                        world.objects[i].parts[j].active = false
+                    end
                 end
             end
         end
@@ -36,7 +38,8 @@ function World:new(env, config)
                 if part1.bodyType ~= "static" then
                     for ii = 1, #world.objects do
                         for jj = 1, #world.objects[ii].parts do
-                            if i ~= ii or j ~= jj then
+                            if i ~= ii or j ~= jj and
+                                world.objects[ii].type == "tile" then
                                 local part2 = world.objects[ii].parts[jj]
                                 if part2.bodyType == "static" and
                                     easyDist(part2.x, part2.y, part1.body:getX(), part1.body:getY()) < 50 then
@@ -49,9 +52,11 @@ function World:new(env, config)
             end
         end
         for i = 1, #world.objects do
-            for j = 1, #world.objects[i].parts do
-                if world.objects[i].parts[j].bodyType == "static" then
-                    world.objects[i].parts[j].body:setActive(world.objects[i].parts[j].active)
+            if world.objects[i].type == "tile" then
+                for j = 1, #world.objects[i].parts do
+                    if world.objects[i].parts[j].bodyType == "static" then
+                        world.objects[i].parts[j].body:setActive(world.objects[i].parts[j].active)
+                    end
                 end
             end
         end

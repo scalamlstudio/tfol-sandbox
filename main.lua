@@ -25,10 +25,11 @@ function love.load()
         space = space,
         control = control
     }
-
     world = World:new(env)
     player = Character:Rvros(env)
     table.insert(world.objects, player)
+    env.world = world
+    env.player = player
 end
 
 function love.update(dt)
