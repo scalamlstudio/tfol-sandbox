@@ -11,13 +11,12 @@ function Object:new(env, config)
     obj.hp = obj.hp or 1
 
     obj.parts = obj.parts or {}
-    -- env.panel:add(tostring(obj.parts[1]))
     for i = 1, #obj.parts do
         local part = obj.parts[i] -- object body
         part.x = part.x or 0
         part.y = part.y or 0
         part.mass = part.mass or 0
-        part.ground = part.ground or true
+        part.tileBreaker = part.tileBreaker or false
         part.bodyType = part.bodyType or "static"
         part.body = love.physics.newBody(env.space, part.x, part.y, part.bodyType)
         part.body:setMass(part.mass)
@@ -74,20 +73,15 @@ function Object:new(env, config)
     function obj:grounded()
         for i = 1, #obj.parts do
             local part = obj.parts[i] -- object body
-            if part.ground then
-                local contacts = part.body:getContacts()
-                if #contacts > 0 then
-                    for i = 1, #contacts do
-                        local x1, y1, x2, y2 = contacts[i]:getPositions()
-                        -- env.panel:add(tostring(x1) .. " " .. tostring(y1) .. " " .. tostring(x2) .. " " .. tostring(y2))
-                        if part.shapeType == 1 and y1 and y2 and y1 > part.body:getY() and y2 > part.body:getY() + part.h / 4 then
-                            return true
-                        elseif part.shapeType == 0 and y1 and y1 > part.body:getY() + part.h / 4 then
-                            return true
-                        end
+            local contacts = part.body:getContacts()
+            if #contacts > 0 then
+                for i = 1, #contacts do
+                    local x1, y1, x2, y2 = contacts[i]:getPositions()
+                    if part.shapeType == 1 and y1 and y2 and y1 > part.body:getY() and y2 > part.body:getY() + part.h / 4 then
+                        return true
+                    elseif part.shapeType == 0 and y1 and y1 > part.body:getY() + part.h / 4 then
+                        return true
                     end
-                -- else
-                --     env.panel:add("NO TOUCH")
                 end
             end
         end

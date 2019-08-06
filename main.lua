@@ -25,11 +25,9 @@ function love.load()
         space = space,
         control = control
     }
-    world = World:new(env)
-    player = Character:Rvros(env)
-    table.insert(world.objects, player)
-    env.world = world
-    env.player = player
+    env.world = World:new(env)
+    env.player = Character:Rvros(env)
+    table.insert(env.world.objects, env.player)
 end
 
 function love.update(dt)
@@ -37,17 +35,17 @@ function love.update(dt)
     env.panel:update("Time:" .. tostring(math.floor(love.timer.getTime()) - StartTime) ..
         "  FPS:" .. tostring(love.timer.getFPS()))
     env.panel:add("Window - W:" .. width .. "  H:" .. height)
-    env.panel:add("Player - X:" .. tostring(player:getX()) ..
-        "  Y:" .. tostring(player:getY()))
-    Camera:follow(world, player) -- before others
+    env.panel:add("Player - X:" .. tostring(env.player:getX()) ..
+        "  Y:" .. tostring(env.player:getY()))
+    Camera:follow(env.world, env.player) -- before others
     Camera:update(dt)
-    world:update(dt)
+    env.world:update(dt)
     Asset:update(dt)
 end
 
 function love.draw()
     Camera:set()
-    world:draw()
+    env.world:draw()
     Camera:unset()
     env.panel:draw()
 end

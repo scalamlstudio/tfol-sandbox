@@ -43,14 +43,14 @@ function Character:Rvros(env)
         hp = 10,
         parts = {{
             bodyType = "dynamic",
-            ground = true,
+            tileBreaker = true,
             x = 300,
             y = 50,
             mass = 10,
             shapeType = 0,
             anim = anims[1]["idle"],
             w = 30,
-            h = 30
+            h = 28
         }, {
             bodyType = "static",
             x = 300,
@@ -62,13 +62,13 @@ function Character:Rvros(env)
     })
     player.mass = 10
     player.speed = 500
-    player.jumpForce = 30000
+    player.jumpSpeed = 500
     player.jumpCD = 0.1
     player.state = "idle"
     local control = env.control or Control:new({type = "keyboard"})
     
     local function groundForce()
-        return player.speed * player.mass
+        return player.speed * player.mass / 1.2
     end
     local function airForce()
         return player.speed * player.mass / 10
@@ -81,12 +81,12 @@ function Character:Rvros(env)
     end
     local function letsJump()
         jumpCD = player.jumpCD
-        local tx, ty = player.parts[1].body:getLinearVelocity()
+        local tvx, tvy = player.parts[1].body:getLinearVelocity()
         player.parts[1].body:setPosition(
             player.parts[1].body:getX(),
             player.parts[1].body:getY() - 10)
-        player.parts[1].body:setLinearVelocity(tx, 0)
-        player.parts[1].body:applyForce(0, -player.jumpForce)
+        -- set Velocity is more consistant than applyForce
+        player.parts[1].body:setLinearVelocity(tvx, -player.jumpSpeed)
     end
     local function forceRun(force)
         player.parts[1].body:applyForce(force, 0)
@@ -99,13 +99,14 @@ function Character:Rvros(env)
     function player:control(dt)
         player.parts[2].body:setPosition(
             player.parts[1].body:getX(),
-            env.world.tile:findLand(player.parts[1].body:getX(), player.parts[1].body:getY()) - 1)
+            env.world.tile:findLand(player.parts[1].body:getX(), player.parts[1].body:getY() + 25) - 1
+        )
         -- env.panel:add(player.name .. " control type " .. control.type)
-        local tx, ty = player.parts[1].body:getLinearVelocity()
-        local v = math.sqrt(tx * tx + ty * ty)
-        -- env.panel:add("tmp: " .. tostring(tx) .. " " .. tostring(ty))
-        if v > player.speed then -- speed cap
-            player.parts[1].body:setLinearVelocity(tx * player.speed / v, ty * player.speed / v)
+        local tvx, tvy = player.parts[1].body:getLinearVelocity()
+        -- env.panel:add("tmp: " .. tostring(tvx) .. " " .. tostring(tvy))
+        local v4 = math.pow(tvx * tvx * tvx * tvx + tvy * tvy * tvy * tvy, 0.25)
+        if v4 > player.speed then -- speed cap
+            player.parts[1].body:setLinearVelocity(tvx * player.speed / v4, tvy * player.speed / v4)
         end
         if jumpCD > 0 then
             jumpCD = jumpCD - dt
@@ -134,7 +135,7 @@ function Character:Rvros(env)
             elseif control:right() then
                 player.state = "run_right"
             else
-                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+                player.parts[1].body:setLinearVelocity(tvx * 0.6, tvy)
             end
         elseif player.state == "run_left" then
             if control:jump() and canJump() then
@@ -159,7 +160,7 @@ function Character:Rvros(env)
                 forceRun(groundForce())
             end
         elseif player.state == "jump" then
-            if ty > 0 then
+            if tvy > 0 then
                 player.state = "fall"
             elseif control:left() then
                 forceRun(-airForce())
@@ -179,33 +180,29 @@ function Character:Rvros(env)
                 player.parts[1].anim:refresh()
                 player.state = "idle"
             else
-                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+                player.parts[1].body:setLinearVelocity(tvx * 0.6, tvy * 0.8)
             end
         elseif player.state == "cast_spell" then
             if player.parts[1].anim:ended() then
                 player.parts[1].anim:refresh()
                 player.state = "idle"
             else
-                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+                player.parts[1].body:setLinearVelocity(tvx * 0.6, tvy * 0.8)
             end
         elseif player.state == "hurt" then
             if player.parts[1].anim:ended() then
                 player.parts[1].anim:refresh()
                 player.state = "idle"
             else
-                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+                player.parts[1].body:setLinearVelocity(tvx * 0.6, tvy * 0.8)
             end
         elseif player.state == "die" then
             if player.parts[1].anim:ended() then
                 player.parts[1].anim:refresh()
                 player.state = "idle"
             else
-                player.parts[1].body:setLinearVelocity(tx * 0.6, ty)
+                player.parts[1].body:setLinearVelocity(0, 0)
             end
-        -- elseif player.state == "wall_slide" then
-        --     if groundCD > 0 then
-        --         player.state = "idle"
-        --     end
         end
 
         if anims[1][player.state] then
@@ -230,7 +227,7 @@ function Character:OldHero(env)
         name = "oldHero",
         parts = {{
             bodyType = "dynamic",
-            ground = true,
+            tileBreaker = true,
             x = 300,
             y = 100,
             mass = 10,

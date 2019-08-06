@@ -30,7 +30,7 @@ function Tile:new(env, config)
         tile.mt[1][i] = dirtid
         tile.mt[tile.mth][i] = dirtid
     end
-    for i = tile.mth / 2, tile.mth do
+    for i = math.floor(tile.mth / 2), tile.mth do
         for j = 1, tile.mtw do
             tile.mt[i][j] = dirtid
         end
@@ -43,12 +43,15 @@ function Tile:new(env, config)
     end
     -- generation function - END
 
-    local objects = {}
+    tile.objects = {}
     for i = 1, tile.mth do
         for j = 1, tile.mtw do
             if tile.mt[i][j] ~= 0 then
-                table.insert(objects, Object:new(env, {
+                table.insert(tile.objects, Object:new(env, {
                     type = "tile",
+                    tileid = #tile.objects + 1,
+                    tilei = i,
+                    tilej = j,
                     parts = {{
                         x = (j - 1) * tile.ts + tile.ts / 2,
                         y = (i - 1) * tile.ts + tile.ts / 2,
@@ -59,36 +62,15 @@ function Tile:new(env, config)
             end
         end
     end
-    -- for i = 1, tile.mth do
-    --     local tmpj = 1
-    --     local tmpt = tile.mt[i][1]
-    --     for j = 1, tile.mtw do
-    --         if tile.mt[i][j] ~= tmpt then
-    --             if tmpt ~= 0 then
-    --                 table.insert(objects, Object:new(env, {
-    --                     parts = {{
-    --                         y = (i - 1) * tile.ts + tile.ts / 2,
-    --                         x = (tmpj - 1) * tile.ts + tile.ts * (j - tmpj) / 2,
-    --                         h = tile.ts,
-    --                         w = tile.ts * (j - tmpj)
-    --                     }}
-    --                 }))
-    --             end
-    --             tmpj = j
-    --             tmpt = tile.mt[i][j]
-    --         end
-    --     end
-    --     if tmpt ~= 0 then
-    --         table.insert(objects, Object:new(env, {
-    --             parts = {{
-    --                 y = (i - 1) * tile.ts + tile.ts / 2,
-    --                 x = (tmpj - 1) * tile.ts + tile.ts * (tile.mtw - tmpj + 1) / 2,
-    --                 h = tile.ts,
-    --                 w = tile.ts * (tile.mtw - tmpj + 1)
-    --             }}
-    --         }))
-    --     end
-    -- end
+
+    function tile:destroy(id)
+        local tmptile = tile.objects[id]
+        tmptile.parts[1].body:setActive(false)
+        tmptile.parts[1].body:release()
+        tmptile.parts[1].fixture:release()
+        tile.mt[tmptile.tilei][tmptile.tilej] = 0
+        table.remove(tile.objects, id)
+    end
 
     function tile:findLand(x, y)
         local ti = math.floor(y / tile.ts) + 1
@@ -118,7 +100,7 @@ function Tile:new(env, config)
         return tileDrawFunc
     end
 
-    return tile, objects
+    return tile
 end
 
 return Tile

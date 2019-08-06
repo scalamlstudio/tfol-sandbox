@@ -11,57 +11,40 @@ function World:new(env, config)
     local dirtid = 2
     local tiles = {rockid, dirtid}
 
-    world.tile, world.objects = Tile:new(env, {
-        ts = 10,
+    world.objects = {}
+    world.tile = Tile:new(env, {
+        ts = 40,
         w = world.w,
         h = world.h,
         tiles = tiles
     })
 
-    local function easyDist(x1, y1, x2, y2)
-        return math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2))
-    end
-
     function world:update(dt)
-        for i = 1, #world.objects do
-            if world.objects[i].type == "tile" then
-                for j = 1, #world.objects[i].parts do
-                    if world.objects[i].parts[j].bodyType == "static" then
-                        world.objects[i].parts[j].active = false
-                    end
-                end
+        for i = #world.tile.objects, 1, -1 do
+            world.tile.objects[i].active = false
+            if love.math.random() < 0.01 and #world.tile.objects > 100 then
+                world.tile:destroy(i)
             end
         end
         for i = 1, #world.objects do
             for j = 1, #world.objects[i].parts do
-                local part1 = world.objects[i].parts[j]
-                if part1.bodyType ~= "static" then
-                    for ii = 1, #world.objects do
-                        for jj = 1, #world.objects[ii].parts do
-                            if i ~= ii or j ~= jj and
-                                world.objects[ii].type == "tile" then
-                                local part2 = world.objects[ii].parts[jj]
-                                if part2.bodyType == "static" and
-                                    easyDist(part2.x, part2.y, part1.body:getX(), part1.body:getY()) < 50 then
-                                    part2.active = true
-                                end
-                            end
+                local part = world.objects[i].parts[j]
+                if part.tileBreaker then
+                    for ii = 1, #world.tile.objects do
+                        local tile = world.tile.objects[ii]
+                        if love.physics.getDistance(tile.parts[1].fixture, part.fixture) < 30 then
+                            tile.active = true
                         end
                     end
                 end
             end
         end
-        for i = 1, #world.objects do
-            if world.objects[i].type == "tile" then
-                for j = 1, #world.objects[i].parts do
-                    if world.objects[i].parts[j].bodyType == "static" then
-                        world.objects[i].parts[j].body:setActive(world.objects[i].parts[j].active)
-                    end
-                end
-            end
+        for i = 1, #world.tile.objects do
+            world.tile.objects[i].parts[1].body:setActive(world.tile.objects[i].active)
         end
         env.space:update(dt)
         env.panel:add("World Objects Number: " .. tostring(#world.objects))
+        env.panel:add("World Tiles Number: " .. tostring(#world.tile.objects))
         for i = 1, #world.objects do
             world.objects[i]:control(dt) -- Sync Objects Positions if needed
             world.objects[i]:update(dt)
@@ -82,10 +65,13 @@ function World:new(env, config)
         end
         -- close stencil
         love.graphics.setStencilTest()
-
         -- objects
         for i = 1, #world.objects do
             world.objects[i]:draw()
+        end
+        -- tiles
+        for i = 1, #world.tile.objects do
+            world.tile.objects[i]:draw()
         end
     end
 
