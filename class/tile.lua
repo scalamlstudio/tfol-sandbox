@@ -53,6 +53,8 @@ function Tile:new(env, config)
                     tilei = i,
                     tilej = j,
                     parts = {{
+                        shapeType = 4,
+                        s = 2,
                         x = (j - 1) * tile.ts + tile.ts / 2,
                         y = (i - 1) * tile.ts + tile.ts / 2,
                         h = tile.ts,
@@ -72,14 +74,43 @@ function Tile:new(env, config)
         table.remove(tile.objects, id)
     end
 
-    function tile:findLand(x, y)
+    function tile:findTouchDirection(x, y, dx, dy)
         local ti = math.floor(y / tile.ts) + 1
         local tj = math.floor(x / tile.ts) + 1
         while ti > 0 and tj > 0 and
             ti <= tile.mth and tj <= tile.mtw and tile.mt[ti][tj] == 0 do
+            ti = ti + dy
+            tj = tj + dx
+        end
+        if dx < 0 then
+            tj = tj + 1
+        end
+        if dy < 0 then
             ti = ti + 1
         end
-        return (ti - 1) * tile.ts
+        return (tj - 1) * tile.ts, (ti - 1) * tile.ts
+    end
+
+    function tile:findLand(x, y, w, f)
+        local mlx, mly = tile:findTouchDirection(x, y, 0, f)
+        local llx, lly = tile:findTouchDirection(x - w / 2, y, 0, f)
+        local rlx, rly = tile:findTouchDirection(x + w / 2, y, 0, f)
+        if f < 0 then
+            return math.max(mly, lly, rly)
+        else
+            return math.min(mly, lly, rly)
+        end
+    end
+
+    function tile:findWall(x, y, h, f)
+        local mlx, mly = tile:findTouchDirection(x, y, f, 0)
+        local ulx, uly = tile:findTouchDirection(x, y - h / 2, f, 0)
+        local dlx, dly = tile:findTouchDirection(x, y + h / 2, f, 0)
+        if f < 0 then
+            return math.max(mlx, ulx, dlx)
+        else
+            return math.min(mlx, ulx, dlx)
+        end
     end
 
     function tile:draw(tileid)

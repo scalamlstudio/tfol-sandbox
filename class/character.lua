@@ -45,18 +45,40 @@ function Character:Rvros(env)
             bodyType = "dynamic",
             tileBreaker = true,
             x = 300,
-            y = 50,
+            y = 100,
             mass = 10,
-            shapeType = 0,
+            shapeType = 4,
+            s = 2,
             anim = anims[1]["idle"],
-            w = 30,
+            w = 20,
             h = 28
         }, {
             bodyType = "static",
             x = 300,
-            y = 200,
+            y = 100,
             shapeType = 1,
-            w = 10,
+            w = 4,
+            h = 2
+        }, {
+            bodyType = "static",
+            x = 300,
+            y = 100,
+            shapeType = 1,
+            w = 2,
+            h = 4
+        }, {
+            bodyType = "static",
+            x = 300,
+            y = 100,
+            shapeType = 1,
+            w = 2,
+            h = 4
+        }, {
+            bodyType = "static",
+            x = 300,
+            y = 100,
+            shapeType = 1,
+            w = 4,
             h = 2
         }}
     })
@@ -99,7 +121,39 @@ function Character:Rvros(env)
     function player:control(dt)
         player.parts[2].body:setPosition(
             player.parts[1].body:getX(),
-            env.world.tile:findLand(player.parts[1].body:getX(), player.parts[1].body:getY() + 25) - 1
+            env.world.tile:findLand(
+                player.parts[1].body:getX(),
+                player.parts[1].body:getY(),
+                player.parts[2].w,
+                1
+            ) - 1
+        )
+        player.parts[3].body:setPosition(
+            env.world.tile:findWall(
+                player.parts[1].body:getX(),
+                player.parts[1].body:getY(),
+                player.parts[2].h,
+                -1
+            ) + 1,
+            player.parts[1].body:getY()
+        )
+        player.parts[4].body:setPosition(
+            env.world.tile:findWall(
+                player.parts[1].body:getX(),
+                player.parts[1].body:getY(),
+                player.parts[2].h,
+                1
+            ) - 1,
+            player.parts[1].body:getY()
+        )
+        player.parts[5].body:setPosition(
+            player.parts[1].body:getX(),
+            env.world.tile:findLand(
+                player.parts[1].body:getX(),
+                player.parts[1].body:getY(),
+                player.parts[2].w,
+                -1
+            ) + 1
         )
         -- env.panel:add(player.name .. " control type " .. control.type)
         local tvx, tvy = player.parts[1].body:getLinearVelocity()

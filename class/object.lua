@@ -31,6 +31,13 @@ function Object:new(env, config)
             part.shape = love.physics.newRectangleShape(0, 0, part.w, part.h)
         elseif part.shapeType == 2 then
             part.shape = love.physics.newEdgeShape(part.x - part.w, part.y, part.x + part.w, part.y)
+        elseif part.shapeType == 4 then
+            part.shape = love.physics.newPolygonShape({
+                -part.w / 2, -part.h / 2 + part.s, -part.w / 2 + part.s, -part.h / 2,
+                 part.w / 2 - part.s, -part.h / 2, part.w / 2, -part.h / 2 + part.s,
+                 part.w / 2, part.h / 2 - part.s, part.w / 2 - part.s, part.h / 2,
+                -part.w / 2 + part.s, part.h / 2, -part.w / 2, part.h / 2 - part.s
+            })
         end
         part.density = part.density or 1
         part.fixture = love.physics.newFixture(part.body, part.shape, part.density)
@@ -77,7 +84,7 @@ function Object:new(env, config)
             if #contacts > 0 then
                 for i = 1, #contacts do
                     local x1, y1, x2, y2 = contacts[i]:getPositions()
-                    if part.shapeType == 1 and y1 and y2 and y1 > part.body:getY() and y2 > part.body:getY() + part.h / 4 then
+                    if (part.shapeType == 1 or part.shapeType == 4) and y1 and y2 and y1 > part.body:getY() and y2 > part.body:getY() + part.h / 4 then
                         return true
                     elseif part.shapeType == 0 and y1 and y1 > part.body:getY() + part.h / 4 then
                         return true
@@ -123,7 +130,7 @@ function Object:new(env, config)
             end
             love.graphics.setColor(1, 0, 0) -- set the drawing color to green for the ground
             if part.body:isActive() then
-                if part.shapeType == 1 then
+                if part.shapeType == 1 or part.shapeType == 4 then
                     love.graphics.polygon("line", part.body:getWorldPoints(part.shape:getPoints()))
                 elseif part.shapeType == 0 then
                     love.graphics.circle("line", part.body:getX(), part.body:getY(),

@@ -22,7 +22,7 @@ function World:new(env, config)
     function world:update(dt)
         for i = #world.tile.objects, 1, -1 do
             world.tile.objects[i].active = false
-            if love.math.random() < 0.01 and #world.tile.objects > 100 then
+            if love.math.random() < 0.01 and #world.tile.objects > 40 then
                 world.tile:destroy(i)
             end
         end
