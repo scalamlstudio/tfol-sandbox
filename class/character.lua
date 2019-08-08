@@ -83,23 +83,23 @@ function Character:Rvros(env)
         }}
     })
     player.mass = 10
-    player.speed = 500
-    player.jumpSpeed = 500
+    player.speed = 600
+    player.jumpSpeed = 320
     player.jumpCD = 0.1
     player.state = "idle"
     local control = env.control or Control:new({type = "keyboard"})
     
     local function groundForce()
-        return player.speed * player.mass / 1.2
+        return player.speed * player.mass / 4
     end
     local function airForce()
-        return player.speed * player.mass / 10
+        return player.speed * player.mass / 5
     end
     local jumpCD = 0
     local groundCD = 0
     local airCD = 0
     local function canJump()
-        return groundCD > 0 and jumpCD == 0
+        return groundCD > 0.2 and jumpCD == 0
     end
     local function letsJump()
         jumpCD = player.jumpCD
@@ -158,13 +158,14 @@ function Character:Rvros(env)
         -- env.panel:add(player.name .. " control type " .. control.type)
         local tvx, tvy = player.parts[1].body:getLinearVelocity()
         -- env.panel:add("tmp: " .. tostring(tvx) .. " " .. tostring(tvy))
-        if math.abs(tvx) > player.speed then -- speed cap
-            tvx = tvx / math.abs(tvx) * player.speed
+        if math.abs(tvx) > player.speed / 2 then -- speed cap
+            tvx = tvx / math.abs(tvx) * player.speed / 2
         end
         if math.abs(tvy) > player.speed then -- speed cap
             tvy = tvy / math.abs(tvy) * player.speed
         end
         player.parts[1].body:setLinearVelocity(tvx, tvy)
+        player.parts[1].body:setGravityScale(1)
         if jumpCD > 0 then
             jumpCD = jumpCD - dt
         elseif jumpCD < 0 then
@@ -217,12 +218,17 @@ function Character:Rvros(env)
                 forceRun(groundForce())
             end
         elseif player.state == "jump" then
+            if control:jump() and airCD < 2 then
+                player.parts[1].body:setGravityScale(0.4)
+            end
             if tvy > 0 then
                 player.state = "fall"
             elseif control:left() then
                 forceRun(-airForce())
             elseif control:right() then
                 forceRun(airForce())
+            else
+                player.parts[1].body:setLinearVelocity(tvx * 0.9, tvy)
             end
         elseif player.state == "fall" then
             if groundCD > 0 then
@@ -231,6 +237,8 @@ function Character:Rvros(env)
                 forceRun(-airForce())
             elseif control:right() then
                 forceRun(airForce())
+            else
+                player.parts[1].body:setLinearVelocity(tvx * 0.9, tvy)
             end
         elseif player.state == "attack_1" then
             if player.parts[1].anim:ended() then
