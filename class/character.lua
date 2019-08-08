@@ -158,10 +158,13 @@ function Character:Rvros(env)
         -- env.panel:add(player.name .. " control type " .. control.type)
         local tvx, tvy = player.parts[1].body:getLinearVelocity()
         -- env.panel:add("tmp: " .. tostring(tvx) .. " " .. tostring(tvy))
-        local v4 = math.pow(tvx * tvx * tvx * tvx + tvy * tvy * tvy * tvy, 0.25)
-        if v4 > player.speed then -- speed cap
-            player.parts[1].body:setLinearVelocity(tvx * player.speed / v4, tvy * player.speed / v4)
+        if math.abs(tvx) > player.speed then -- speed cap
+            tvx = tvx / math.abs(tvx) * player.speed
         end
+        if math.abs(tvy) > player.speed then -- speed cap
+            tvy = tvy / math.abs(tvy) * player.speed
+        end
+        player.parts[1].body:setLinearVelocity(tvx, tvy)
         if jumpCD > 0 then
             jumpCD = jumpCD - dt
         elseif jumpCD < 0 then
